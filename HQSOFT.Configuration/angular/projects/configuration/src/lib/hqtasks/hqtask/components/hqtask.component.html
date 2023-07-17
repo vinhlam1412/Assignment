@@ -1,0 +1,596 @@
+<abp-page [title]="'Configuration::HQTasks' | abpLocalization">
+  <abp-page-toolbar-container class="col">
+    <div class="text-lg-end pt-2">
+      <button
+        class="btn btn-primary btn-sm mx-2"
+        type="button"
+        [disabled]="isExportToExcelBusy"
+        (click)="exportToExcel()"
+      >
+        {{ 'Configuration::ExportToExcel' | abpLocalization }}
+      </button>
+
+      <button
+        *abpPermission="'Configuration.HQTasks.Create'"
+        class="btn btn-primary btn-sm"
+        type="button"
+        (click)="create()"
+      >
+        <i class="fa fa-plus me-1" aria-hidden="true"></i>
+        {{ 'Configuration::NewHQTask' | abpLocalization }}
+      </button>
+    </div>
+  </abp-page-toolbar-container>
+
+  <abp-advanced-entity-filters localizationSourceName="Configuration" [list]="list">
+    <abp-advanced-entity-filters-form>
+      <form #filterForm (keyup.enter)="list.get()">
+        <div class="row">
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="subjectFilter">
+                {{ 'Configuration::Subject' | abpLocalization }}
+              </label>
+
+              <input
+                id="subjectFilter"
+                class="form-control"
+                [(ngModel)]="filters.subject"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </div>
+          </div>
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="projectFilter">
+                {{ 'Configuration::Project' | abpLocalization }}
+              </label>
+
+              <input
+                id="projectFilter"
+                class="form-control"
+                [(ngModel)]="filters.project"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </div>
+          </div>
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="statusFilter">
+                {{ 'Configuration::Status' | abpLocalization }}
+              </label>
+
+              <select
+                id="statusFilter"
+                class="form-select form-control"
+                [(ngModel)]="filters.status"
+                [ngModelOptions]="{ standalone: true }"
+              >
+                <option [ngValue]="null"></option>
+                <option
+                  *ngFor="let option of statusTaskOptions; trackBy: track.by('value')"
+                  [ngValue]="option.value"
+                >
+                  {{ 'Configuration::Enum:StatusTask.' + option.value | abpLocalization }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="priorityFilter">
+                {{ 'Configuration::Priority' | abpLocalization }}
+              </label>
+
+              <select
+                id="priorityFilter"
+                class="form-select form-control"
+                [(ngModel)]="filters.priority"
+                [ngModelOptions]="{ standalone: true }"
+              >
+                <option [ngValue]="null"></option>
+                <option
+                  *ngFor="let option of priorityTaskOptions; trackBy: track.by('value')"
+                  [ngValue]="option.value"
+                >
+                  {{ 'Configuration::Enum:PriorityTask.' + option.value | abpLocalization }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="minExpectedStartDate">
+                {{ 'Configuration::MinExpectedStartDate' | abpLocalization }}
+              </label>
+
+              <div class="input-group" validationTarget>
+                <input
+                  id="minExpectedStartDate"
+                  class="form-control"
+                  #minExpectedStartDateInput
+                  #minExpectedStartDateDatepicker="ngbDatepicker"
+                  name="minExpectedStartDate"
+                  ngbDatepicker
+                  container="body"
+                  readonly
+                  (click)="minExpectedStartDateDatepicker.toggle()"
+                  (keyup.space)="minExpectedStartDateDatepicker.toggle()"
+                  [(ngModel)]="filters.expectedStartDateMin"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <div *ngIf="minExpectedStartDateInput.value" class="input-group-append">
+                  <button
+                    class="btn btn-link px-2"
+                    type="button"
+                    [title]="'AbpUi::Clear' | abpLocalization"
+                    (click)="
+                      minExpectedStartDateDatepicker.writeValue(null);
+                      minExpectedStartDateDatepicker.manualDateChange(null, true)
+                    "
+                  >
+                    <i class="fa fa-times" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="maxExpectedStartDate">
+                {{ 'Configuration::MaxExpectedStartDate' | abpLocalization }}
+              </label>
+
+              <div class="input-group" validationTarget>
+                <input
+                  id="maxExpectedStartDate"
+                  class="form-control"
+                  #maxExpectedStartDateInput
+                  #maxExpectedStartDateDatepicker="ngbDatepicker"
+                  name="maxExpectedStartDate"
+                  ngbDatepicker
+                  readonly
+                  (click)="maxExpectedStartDateDatepicker.toggle()"
+                  (keyup.space)="maxExpectedStartDateDatepicker.toggle()"
+                  [(ngModel)]="filters.expectedStartDateMax"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <div *ngIf="maxExpectedStartDateInput.value" class="input-group-append">
+                  <button
+                    class="btn btn-link px-2"
+                    type="button"
+                    [title]="'AbpUi::Clear' | abpLocalization"
+                    (click)="
+                      maxExpectedStartDateDatepicker.writeValue(null);
+                      maxExpectedStartDateDatepicker.manualDateChange(null, true)
+                    "
+                  >
+                    <i class="fa fa-times" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="minExpectedEndDate">
+                {{ 'Configuration::MinExpectedEndDate' | abpLocalization }}
+              </label>
+
+              <div class="input-group" validationTarget>
+                <input
+                  id="minExpectedEndDate"
+                  class="form-control"
+                  #minExpectedEndDateInput
+                  #minExpectedEndDateDatepicker="ngbDatepicker"
+                  name="minExpectedEndDate"
+                  ngbDatepicker
+                  container="body"
+                  readonly
+                  (click)="minExpectedEndDateDatepicker.toggle()"
+                  (keyup.space)="minExpectedEndDateDatepicker.toggle()"
+                  [(ngModel)]="filters.expectedEndDateMin"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <div *ngIf="minExpectedEndDateInput.value" class="input-group-append">
+                  <button
+                    class="btn btn-link px-2"
+                    type="button"
+                    [title]="'AbpUi::Clear' | abpLocalization"
+                    (click)="
+                      minExpectedEndDateDatepicker.writeValue(null);
+                      minExpectedEndDateDatepicker.manualDateChange(null, true)
+                    "
+                  >
+                    <i class="fa fa-times" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="maxExpectedEndDate">
+                {{ 'Configuration::MaxExpectedEndDate' | abpLocalization }}
+              </label>
+
+              <div class="input-group" validationTarget>
+                <input
+                  id="maxExpectedEndDate"
+                  class="form-control"
+                  #maxExpectedEndDateInput
+                  #maxExpectedEndDateDatepicker="ngbDatepicker"
+                  name="maxExpectedEndDate"
+                  ngbDatepicker
+                  readonly
+                  (click)="maxExpectedEndDateDatepicker.toggle()"
+                  (keyup.space)="maxExpectedEndDateDatepicker.toggle()"
+                  [(ngModel)]="filters.expectedEndDateMax"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <div *ngIf="maxExpectedEndDateInput.value" class="input-group-append">
+                  <button
+                    class="btn btn-link px-2"
+                    type="button"
+                    [title]="'AbpUi::Clear' | abpLocalization"
+                    (click)="
+                      maxExpectedEndDateDatepicker.writeValue(null);
+                      maxExpectedEndDateDatepicker.manualDateChange(null, true)
+                    "
+                  >
+                    <i class="fa fa-times" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="minExpectedTime">
+                {{ 'Configuration::MinExpectedTime' | abpLocalization }}
+              </label>
+
+              <input
+                id="minExpectedTime"
+                type="number"
+                class="form-control"
+                [(ngModel)]="filters.expectedTimeMin"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="maxExpectedTime">
+                {{ 'Configuration::MaxExpectedTime' | abpLocalization }}
+              </label>
+
+              <input
+                id="maxExpectedTime"
+                type="number"
+                class="form-control"
+                [(ngModel)]="filters.expectedTimeMax"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </div>
+          </div>
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="minProcess">
+                {{ 'Configuration::MinProcess' | abpLocalization }}
+              </label>
+
+              <input
+                id="minProcess"
+                type="number"
+                class="form-control"
+                [(ngModel)]="filters.processMin"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-auto">
+            <div class="mb-3">
+              <label class="form-label" for="maxProcess">
+                {{ 'Configuration::MaxProcess' | abpLocalization }}
+              </label>
+
+              <input
+                id="maxProcess"
+                type="number"
+                class="form-control"
+                [(ngModel)]="filters.processMax"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-auto align-self-end mb-3">
+            <div class="row">
+              <div class="col-6 col-sm-auto d-grid">
+                <button type="button" class="btn btn-outline-primary" (click)="clearFilters()">
+                  <span>{{ 'AbpUi::Clear' | abpLocalization }}</span>
+                </button>
+              </div>
+              <div class="col-6 col-sm-auto d-grid">
+                <button type="button" class="btn btn-primary" (click)="list.get()">
+                  <span>{{ 'AbpUi::Refresh' | abpLocalization }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </abp-advanced-entity-filters-form>
+  </abp-advanced-entity-filters>
+
+  <div class="card">
+    <div class="card-body">
+      <ngx-datatable [rows]="data.items" [count]="data.totalCount" [list]="list" default>
+        <ngx-datatable-column
+          [name]="'AbpUi::Actions' | abpLocalization"
+          [maxWidth]="150"
+          [width]="150"
+          [sortable]="false"
+        >
+          <ng-template let-row="row" let-i="rowIndex" ngx-datatable-cell-template>
+            <div ngbDropdown container="body" class="d-inline-block">
+              <button
+                class="btn btn-primary btn-sm dropdown-toggle"
+                data-toggle="dropdown"
+                aria-haspopup="true"
+                ngbDropdownToggle
+              >
+                <i class="fa fa-cog me-1" aria-hidden="true"></i>
+                {{ 'AbpUi::Actions' | abpLocalization }}
+              </button>
+
+              <div ngbDropdownMenu>
+                <button
+                  ngbDropdownItem
+                  *abpPermission="'Configuration.HQTasks.Edit'"
+                  (click)="update(row)"
+                >
+                  {{ 'AbpUi::Edit' | abpLocalization }}
+                </button>
+
+                <button
+                  ngbDropdownItem
+                  *abpPermission="'Configuration.HQTasks.Delete'"
+                  (click)="delete(row)"
+                >
+                  {{ 'AbpUi::Delete' | abpLocalization }}
+                </button>
+              </div>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column
+          name="{{ 'Configuration::Subject' | abpLocalization }}"
+          prop="subject"
+        >
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.subject }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column
+          name="{{ 'Configuration::Project' | abpLocalization }}"
+          prop="project"
+        >
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.project }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="{{ 'Configuration::Status' | abpLocalization }}" prop="status">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{
+              row.status !== null
+                ? ('Configuration::Enum:StatusTask.' + row.status | abpLocalization)
+                : ''
+            }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column
+          name="{{ 'Configuration::Priority' | abpLocalization }}"
+          prop="priority"
+        >
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{
+              row.priority !== null
+                ? ('Configuration::Enum:PriorityTask.' + row.priority | abpLocalization)
+                : ''
+            }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column
+          name="{{ 'Configuration::ExpectedStartDate' | abpLocalization }}"
+          prop="expectedStartDate"
+        >
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.expectedStartDate | date }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column
+          name="{{ 'Configuration::ExpectedEndDate' | abpLocalization }}"
+          prop="expectedEndDate"
+        >
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.expectedEndDate | date }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column
+          name="{{ 'Configuration::ExpectedTime' | abpLocalization }}"
+          prop="expectedTime"
+        >
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.expectedTime }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column
+          name="{{ 'Configuration::Process' | abpLocalization }}"
+          prop="process"
+        >
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.process }}
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+    </div>
+  </div>
+</abp-page>
+
+<abp-modal [busy]="isModalBusy" [(visible)]="isModalOpen">
+  <ng-template #abpHeader>
+    <h3>
+      {{ (selected ? 'AbpUi::Edit' : 'Configuration::NewHQTask') | abpLocalization }}
+    </h3>
+  </ng-template>
+
+  <ng-template #abpBody>
+    <form [formGroup]="form" id="hqtask" (ngSubmit)="submitForm()" validateOnSubmit>
+      <div class="mt-2 fade-in-top">
+        <div class="mb-3">
+          <label class="form-label" for="hqtask-subject">
+            {{ 'Configuration::Subject' | abpLocalization }} *
+          </label>
+
+          <input id="hqtask-subject" formControlName="subject" class="form-control" autofocus />
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="hqtask-project">
+            {{ 'Configuration::Project' | abpLocalization }} *
+          </label>
+
+          <input id="hqtask-project" formControlName="project" class="form-control" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="hqtask-status">
+            {{ 'Configuration::Status' | abpLocalization }}
+          </label>
+
+          <select id="hqtask-status" formControlName="status" class="form-select form-control">
+            <option [ngValue]="null"></option>
+            <option
+              *ngFor="let option of statusTaskOptions; trackBy: track.by('key')"
+              [ngValue]="option.value"
+            >
+              {{ 'Configuration::Enum:StatusTask.' + option.value | abpLocalization }}
+            </option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="hqtask-priority">
+            {{ 'Configuration::Priority' | abpLocalization }}
+          </label>
+
+          <select id="hqtask-priority" formControlName="priority" class="form-select form-control">
+            <option [ngValue]="null"></option>
+            <option
+              *ngFor="let option of priorityTaskOptions; trackBy: track.by('key')"
+              [ngValue]="option.value"
+            >
+              {{ 'Configuration::Enum:PriorityTask.' + option.value | abpLocalization }}
+            </option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="hqtask-expected-start-date">
+            {{ 'Configuration::ExpectedStartDate' | abpLocalization }}
+          </label>
+
+          <div class="input-group" validationTarget>
+            <input
+              readonly
+              id="hqtask-expected-start-date"
+              formControlName="expectedStartDate"
+              class="form-control"
+              ngbDatepicker
+              #expectedStartDateInput
+              #expectedStartDateDatepicker="ngbDatepicker"
+              (click)="expectedStartDateDatepicker.open()"
+              (keyup.space)="expectedStartDateDatepicker.open()"
+            />
+            <div *ngIf="expectedStartDateInput.value" class="input-group-append">
+              <button
+                class="btn btn-link px-2"
+                type="button"
+                [title]="'AbpUi::Clear' | abpLocalization"
+                (click)="
+                  expectedStartDateDatepicker.writeValue(null);
+                  expectedStartDateDatepicker.manualDateChange(null, true)
+                "
+              >
+                <i class="fa fa-times" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="hqtask-expected-end-date">
+            {{ 'Configuration::ExpectedEndDate' | abpLocalization }}
+          </label>
+
+          <div class="input-group" validationTarget>
+            <input
+              readonly
+              id="hqtask-expected-end-date"
+              formControlName="expectedEndDate"
+              class="form-control"
+              ngbDatepicker
+              #expectedEndDateInput
+              #expectedEndDateDatepicker="ngbDatepicker"
+              (click)="expectedEndDateDatepicker.open()"
+              (keyup.space)="expectedEndDateDatepicker.open()"
+            />
+            <div *ngIf="expectedEndDateInput.value" class="input-group-append">
+              <button
+                class="btn btn-link px-2"
+                type="button"
+                [title]="'AbpUi::Clear' | abpLocalization"
+                (click)="
+                  expectedEndDateDatepicker.writeValue(null);
+                  expectedEndDateDatepicker.manualDateChange(null, true)
+                "
+              >
+                <i class="fa fa-times" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="hqtask-expected-time">
+            {{ 'Configuration::ExpectedTime' | abpLocalization }}
+          </label>
+
+          <input
+            type="number"
+            id="hqtask-expected-time"
+            formControlName="expectedTime"
+            class="form-control"
+          />
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="hqtask-process">
+            {{ 'Configuration::Process' | abpLocalization }}
+          </label>
+
+          <input type="number" id="hqtask-process" formControlName="process" class="form-control" />
+        </div>
+      </div>
+    </form>
+  </ng-template>
+
+  <ng-template #abpFooter>
+    <button type="button" class="btn btn-secondary" abpClose>
+      {{ 'AbpUi::Cancel' | abpLocalization }}
+    </button>
+
+    <abp-button iconClass="fa fa-check" buttonType="submit" formName="hqtask">
+      {{ 'AbpUi::Save' | abpLocalization }}
+    </abp-button>
+  </ng-template>
+</abp-modal>
